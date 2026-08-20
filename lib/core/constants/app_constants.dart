@@ -1,5 +1,9 @@
-// lib/core/constants/app_constants.dart
 import 'package:flutter/material.dart';
+
+class ApiConstants {
+  static const String baseUrl = 'https://api.football-data.org/v4/';
+  static const String apiKey = '6ee3696dc7f641d8a022ea6dba29ff4f';
+}
 
 class AppColors {
   // Thème Vert Terrain (Clair)
@@ -16,12 +20,4 @@ class AppColors {
   static const Color liveRed = Color(
     0xFFEF4444,
   ); // Rouge clignotant pour les matchs en direct
-}
-
-class ApiConstants {
-  // URL de base officielle de l'API Football-Data
-  static const String baseUrl = 'https://football-data.org';
-
-  // Clé d'accès API gratuite (À remplacer par votre clé personnelle reçue par email)
-  static const String apiKey = '6ee3696dc7f641d8a022ea6dba29ff4f';
 }

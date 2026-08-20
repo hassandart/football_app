@@ -1,79 +1,9 @@
+// lib/features/presentation/pagess/live_scores_dashboard_screen.dart
 import 'package:flutter/material.dart';
-import 'package:football_app/features/live_scores/domain/entities/match.dart';
 import 'package:football_app/features/presentation/controllers/live_scores_provider.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_constants.dart';
-
-class MatchCard extends StatelessWidget {
-  final FootballMatch match;
-  const MatchCard({super.key, required this.match});
-
-  @override
-  Widget build(BuildContext context) {
-    return Card(
-      margin: EdgeInsets.zero,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              match.homeTeam,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 6.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    '${match.homeScore} - ${match.awayScore}',
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  if (match.isLive) ...[
-                    const SizedBox(width: 4),
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 4,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.red,
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'LIVE',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 8,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            Text(
-              match.awayTeam,
-              textAlign: TextAlign.center,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
 class LiveScoresDashboardScreen extends StatefulWidget {
   const LiveScoresDashboardScreen({super.key});
@@ -173,16 +103,8 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
       ),
       appBar: AppBar(
         elevation: 0,
+        backgroundColor: AppColors.primaryGreen,
         centerTitle: true,
-        flexibleSpace: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Colors.transparent, Colors.black.withAlpha(200)],
-            ),
-          ),
-        ),
         title: GestureDetector(
           onTap: () => _showLeagueSelector(context),
           child: Row(
@@ -217,6 +139,7 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
             )
           : CustomScrollView(
               slivers: [
+                // --- 1ère UI : LISTE HORIZONTALE ---
                 SliverToBoxAdapter(
                   child: Container(
                     color: Colors.white,
@@ -227,149 +150,253 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
                         horizontal: 12,
                         vertical: 10,
                       ),
-                      itemCount: provider.matches.length,
+                      itemCount: provider.matches.length >= 3
+                          ? 3
+                          : provider.matches.length,
                       itemBuilder: (context, index) {
                         final match = provider.matches[index];
                         return Container(
-                          width: 150,
+                          width: 155,
                           margin: const EdgeInsets.only(right: 12),
-                          child: MatchCard(match: match),
+                          child: Card(
+                            margin: EdgeInsets.zero,
+                            color: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Padding(
+                              padding: const EdgeInsets.all(10.0),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    match.source.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: AppColors.primaryGreen,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 9,
+                                    ),
+                                    maxLines: 1,
+                                    overflow: TextOverflow.ellipsis,
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Expanded(
+                                    child: Center(
+                                      child: Text(
+                                        match.title,
+                                        textAlign: TextAlign.center,
+                                        maxLines: 2,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 12,
+                                          color: Colors.black87,
+                                          height: 1.2,
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 3,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.backgroundLight,
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                    child: Text(
+                                      match.time,
+                                      style: const TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w600,
+                                        color: Colors.grey,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         );
                       },
                     ),
                   ),
                 ),
+                // --- 2ème UI : CARTE IMAGE À LA UNE ---
                 SliverToBoxAdapter(
                   child: Container(
-                    height: 180,
                     margin: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 16,
                     ),
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16),
-                      image: const DecorationImage(
-                        image: NetworkImage(
-                          'https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L3VwZDIzMDY4LWltYWdlLWt3bHliaXg0LmpwZw.jpg',
-                        ),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(16),
-                        gradient: LinearGradient(
-                          begin: Alignment.topCenter,
-                          end: Alignment.bottomCenter,
-                          colors: [
-                            Colors.transparent,
-                            Colors.black.withAlpha(200),
-                          ],
-                        ),
-                      ),
-                      padding: const EdgeInsets.all(16),
-                      alignment: Alignment.bottomLeft,
-                      child: const Text(
-                        'Mercato : Les dernières minutes du transfert de l\'année !',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                    child: Text(
-                      'À la une aujourd\'hui',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final List<Map<String, String>> articles = [
-                      {
-                        'title': 'Le Real Madrid s’impose sur le fil !',
-                        'desc':
-                            'Menés au score jusqu’à la 80ème minute, les Merengues ont renversé la situation grâce au doublé salvateur de leur attaquant vedette dans les arrêts de jeu.',
-                        'img':
-                            'https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L3VwZDIzMDcxLWltYWdlLWt3bHliaXg3LmpwZw.jpg',
-                      },
-                      {
-                        'title':
-                            'Ligue 1 : Le choc PSG - OM tient ses promesses',
-                        'desc':
-                            'Un match d’une intensité rare devant un stade en ébullition. Les deux équipes se quittent sur un score de parité après une bataille tactique mémorable au milieu de terrain.',
-                        'img':
-                            'https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIyLTA1L3VwZDIzMDY4LWltYWdlLWt3bHliaXg0LmpwZw.jpg',
-                      },
-                      {
-                        'title': 'Révolution tactique : Le retour du 4-4-2 ?',
-                        'desc':
-                            'Plusieurs grands entraîeurs européens abandonnent le traditionnel 4-3-3 cette semaine pour redonner vie au duo d’attaquants axiaux.',
-                        'img':
-                            'https://images.rawpixel.com/image_800/cHJpdmF0ZS9sci9pbWFnZXMvd2Vic2l0ZS8yMDIzLTA4L3Jhd3BpeGVsX29mZmljZV8yNl9waG90b19vZl9hX3NvY2Nlcl9tYXRjaF9hdF9uaWdodF9zdGFkaXVtX2VtcHR5X2NmOTFiYzg0LThjMzEtNDdhMS1hYmZlLTk2MGJjMDU3YmE5Ni5qcGc.jpg',
-                      },
-                    ];
-                    final article = articles[index % articles.length];
-                    return Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
-                      ),
-                      child: Card(
-                        margin: EdgeInsets.zero,
-                        clipBehavior: Clip.antiAlias,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Container(
-                              height: 160,
-                              width: double.infinity,
-                              decoration: BoxDecoration(
-                                image: DecorationImage(
-                                  image: NetworkImage(article['img']!),
-                                  fit: BoxFit.cover,
-                                ),
+                    child: provider.matches.isNotEmpty
+                        ? InkWell(
+                            onTap: () {},
+                            child: Card(
+                              color: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16),
                               ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.all(16.0),
+                              clipBehavior: Clip.antiAlias,
+                              elevation: 2,
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    article['title']!,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
+                                  CachedNetworkImage(
+                                    // Utilise le premier match disponible pour la Une
+                                    imageUrl: provider.matches[0].imageUrl,
+                                    height: 180,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    placeholder: (context, url) => Container(
+                                      height: 180,
+                                      color: Colors.black,
+                                      child: const Center(
+                                        child: CircularProgressIndicator(
+                                          color: AppColors.primaryGreen,
+                                        ),
+                                      ),
+                                    ),
+                                    errorWidget: (context, url, error) =>
+                                        Container(
+                                          height: 180,
+                                          color: Colors.black,
+                                          child: const Icon(
+                                            Icons.broken_image,
+                                            color: Colors.grey,
+                                            size: 40,
+                                          ),
+                                        ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(14.0),
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          provider.matches[0].source
+                                              .toUpperCase(),
+                                          style: const TextStyle(
+                                            color: AppColors.primaryGreen,
+                                            fontSize: 10,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Text(
+                                          provider.matches[0].title,
+                                          style: const TextStyle(
+                                            color: Colors.black87,
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                            height: 1.3,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          provider.matches[0].time,
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 11,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(height: 8),
-                                  Text(
-                                    article['desc']!,
-                                    maxLines: 3,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 13,
-                                      height: 1.4,
+                                ],
+                              ),
+                            ),
+                          )
+                        : const SizedBox.shrink(),
+                  ),
+                ),
+
+                // --- 3ème UI : FIL VERTICAL AVEC IMAGE ---
+                if (provider.matches.length > 1)
+                  SliverPadding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    sliver: SliverList(
+                      delegate: SliverChildBuilderDelegate((context, index) {
+                        // Affiche le reste des matchs à partir du deuxième élément
+                        final match = provider.matches[index + 1];
+                        return Container(
+                          margin: const EdgeInsets.only(bottom: 10),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(12),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: .03),
+                                blurRadius: 4,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: ListTile(
+                            contentPadding: const EdgeInsets.all(10),
+                            leading: ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: CachedNetworkImage(
+                                imageUrl: match.imageUrl,
+                                width: 80,
+                                height: 80,
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(
+                                  width: 80,
+                                  height: 80,
+                                  color: Colors.black,
+                                  child: const Center(
+                                    child: SizedBox(
+                                      width: 20,
+                                      height: 20,
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        color: AppColors.primaryGreen,
+                                      ),
                                     ),
                                   ),
-                                  const SizedBox(height: 12),
-                                  const Text(
-                                    'Il y a 2 heures • Actualités',
-                                    style: TextStyle(
+                                ),
+                                errorWidget: (context, url, error) => Container(
+                                  width: 80,
+                                  height: 80,
+                                  color: Colors.black,
+                                  child: const Icon(
+                                    Icons.newspaper,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            title: Text(
+                              match.title,
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: const TextStyle(
+                                color: Colors.black87,
+                                fontSize: 13,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    match.source,
+                                    style: const TextStyle(
+                                      color: AppColors.primaryGreen,
+                                      fontSize: 11,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  Text(
+                                    match.time,
+                                    style: const TextStyle(
                                       color: Colors.grey,
                                       fontSize: 11,
                                     ),
@@ -377,13 +404,11 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
                                 ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }, childCount: 3),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 24)),
+                          ),
+                        );
+                      }, childCount: provider.matches.length - 1),
+                    ),
+                  ),
               ],
             ),
     );

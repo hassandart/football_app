@@ -1,7 +1,7 @@
-// lib/features/live_scores/presentation/controllers/live_scores_provider.dart
+// lib/features/presentation/controllers/live_scores_provider.dart
 import 'package:flutter/material.dart';
 import 'package:football_app/features/live_scores/domain/domain_repositories/live_scores_repository.dart';
-import 'package:football_app/features/live_scores/domain/entities/match.dart';
+import 'package:football_app/features/live_scores/domain/entities/football_news.dart';
 
 class LiveScoresProvider extends ChangeNotifier {
   LiveScoresRepository _repository;
@@ -9,30 +9,34 @@ class LiveScoresProvider extends ChangeNotifier {
   LiveScoresProvider({required LiveScoresRepository repository})
     : _repository = repository;
 
-  set repository(LiveScoresRepository value) {
-    _repository = value;
-  }
-
-  List<FootballMatch> _matches = [];
+  List<FootballNews> _matches = [];
   bool _isLoading = false;
   String? _errorMessage;
 
-  List<FootballMatch> get matches => _matches;
+  List<FootballNews> get matches => _matches;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  Future<void> fetchLiveMatches() async {
+  set repository(LiveScoresRepository value) {
+    if (_repository != value) {
+      _repository = value;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchLiveMatches({String leagueCode = 'PL'}) async {
     _isLoading = true;
     _errorMessage = null;
-    notifyListeners(); // Affiche l'indicateur de chargement à l'écran
+    notifyListeners();
 
     try {
-      _matches = await _repository.getLiveMatches();
+      _matches = await _repository.getLiveMatches(leagueCode: leagueCode);
     } catch (e) {
-      _errorMessage = "Impossible de récupérer les scores en direct.";
+      _errorMessage = e.toString();
     } finally {
+      // 🟢 RECTIFICATION : Le mot-clé 'finally' a été rajouté ici
       _isLoading = false;
-      notifyListeners(); // Rafraîchit l'écran avec les données ou l'erreur
+      notifyListeners();
     }
   }
 }
