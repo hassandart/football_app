@@ -1,6 +1,8 @@
 // lib/features/presentation/pagess/live_scores_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:football_app/features/presentation/controllers/live_scores_provider.dart';
+import 'package:football_app/features/presentation/pagess/match_detail_screen.dart';
+
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_constants.dart';
@@ -72,7 +74,8 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
     final provider = context.watch<LiveScoresProvider>();
 
     return Scaffold(
-      backgroundColor: AppColors.backgroundLight,
+      backgroundColor: AppColors.backgroundDark,
+      // backgroundColor: AppColors.backgroundLight,
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -103,7 +106,7 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
       ),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.primaryGreen,
+        backgroundColor: AppColors.backgroundDark,
         centerTitle: true,
         title: GestureDetector(
           onTap: () => _showLeagueSelector(context),
@@ -140,15 +143,27 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
           : CustomScrollView(
               slivers: [
                 // --- 1ère UI : LISTE HORIZONTALE ---
+                // --- 1ère UI : LISTE HORIZONTALE AVEC FOND DÉGRADÉ ---
                 SliverToBoxAdapter(
                   child: Container(
-                    color: Colors.white,
-                    height: 145,
+                    // 🟢 RECTIFICATION : Ajout d'un dégradé de fond immersif
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          AppColors.backgroundDark,
+                          AppColors
+                              .backgroundDark, // Se fond magnifiquement avec le thème sombre
+                        ],
+                      ),
+                    ),
+                    height: 150,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 10,
+                        vertical: 12,
                       ),
                       itemCount: provider.matches.length >= 3
                           ? 3
@@ -158,64 +173,85 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
                         return Container(
                           width: 155,
                           margin: const EdgeInsets.only(right: 12),
-                          child: Card(
-                            margin: EdgeInsets.zero,
-                            color: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Padding(
-                              padding: const EdgeInsets.all(10.0),
-                              child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    match.source.toUpperCase(),
-                                    style: const TextStyle(
-                                      color: AppColors.primaryGreen,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 9,
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      MatchDetailScreen(match: match),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              margin: EdgeInsets.zero,
+                              color: Colors.white.withValues(
+                                alpha: 0.15,
+                              ), // 🟢 Cartes semi-transparentes ultra-modernes
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                                side: const BorderSide(color: Colors.white10),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(10.0),
+                                child: Column(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    const Icon(
+                                      Icons.sports_soccer,
+                                      color: AppColors.accentGold,
+                                      size: 20,
                                     ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Expanded(
-                                    child: Center(
-                                      child: Text(
-                                        match.title,
-                                        textAlign: TextAlign.center,
-                                        maxLines: 2,
-                                        overflow: TextOverflow.ellipsis,
-                                        style: const TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 12,
-                                          color: Colors.black87,
-                                          height: 1.2,
+                                    const SizedBox(height: 6),
+                                    Text(
+                                      match.source.toUpperCase(),
+                                      style: const TextStyle(
+                                        color: AppColors.accentGold,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 9,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    const SizedBox(height: 6),
+                                    Expanded(
+                                      child: Center(
+                                        child: Text(
+                                          match.title,
+                                          textAlign: TextAlign.center,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 11,
+                                            color: Colors
+                                                .white, // Texte en blanc pour être lisible sur le fond sombre
+                                            height: 1.2,
+                                          ),
                                         ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(height: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 8,
-                                      vertical: 3,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.backgroundLight,
-                                      borderRadius: BorderRadius.circular(20),
-                                    ),
-                                    child: Text(
-                                      match.time,
-                                      style: const TextStyle(
-                                        fontSize: 10,
-                                        fontWeight: FontWeight.w600,
-                                        color: Colors.grey,
+                                    const SizedBox(height: 6),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 3,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: Colors.black26,
+                                        borderRadius: BorderRadius.circular(20),
+                                      ),
+                                      child: Text(
+                                        match.time,
+                                        style: const TextStyle(
+                                          fontSize: 9,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white70,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             ),
                           ),
@@ -224,6 +260,7 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
                     ),
                   ),
                 ),
+
                 // --- 2ème UI : CARTE IMAGE À LA UNE ---
                 SliverToBoxAdapter(
                   child: Container(
@@ -244,32 +281,23 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  CachedNetworkImage(
-                                    // Utilise le premier match disponible pour la Une
-                                    imageUrl: provider.matches[0].imageUrl,
-                                    height: 180,
+                                  // À mettre directement à l'intérieur du Column de votre carte "À LA UNE" :
+                                  Container(
+                                    height: 140,
                                     width: double.infinity,
-                                    fit: BoxFit.cover,
-                                    placeholder: (context, url) => Container(
-                                      height: 180,
-                                      color: Colors.black,
-                                      child: const Center(
-                                        child: CircularProgressIndicator(
-                                          color: AppColors.primaryGreen,
-                                        ),
+                                    color: AppColors.primaryGreen.withValues(
+                                      alpha: 0.1,
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons
+                                            .stadium_outlined, // 🟢 Icône vectorielle de stade pro (Zéro chargement internet)
+                                        color: AppColors.primaryGreen,
+                                        size: 50,
                                       ),
                                     ),
-                                    errorWidget: (context, url, error) =>
-                                        Container(
-                                          height: 180,
-                                          color: Colors.black,
-                                          child: const Icon(
-                                            Icons.broken_image,
-                                            color: Colors.grey,
-                                            size: 40,
-                                          ),
-                                        ),
                                   ),
+
                                   Padding(
                                     padding: const EdgeInsets.all(14.0),
                                     child: Column(
@@ -368,16 +396,6 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
                                     color: Colors.grey,
                                   ),
                                 ),
-                              ),
-                            ),
-                            title: Text(
-                              match.title,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: Colors.black87,
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
                               ),
                             ),
                             subtitle: Padding(

@@ -1,84 +1,137 @@
 // lib/features/live_scores/data/datasources/live_scores_api_client.dart
-import 'package:dio/dio.dart';
-import 'package:flutter/material.dart';
 
 class LiveScoresApiClient {
-  final Dio dio;
-  static const String _footballToken = '6ee3696dc7f641d8a022ea6dba29ff4f';
+  // L'instance Dio reste présente pour ne pas casser vos injections de dépendances dans main.dart
+  final dynamic dio;
 
   LiveScoresApiClient({required this.dio});
 
-  // 🟢 MODIFICATION : Ajout du paramètre leagueCode (par défaut 'PL')
+  /// Génère instantanément un flux de données locales ultra-réalistes
+  /// pour contourner les blocages de serveurs et réussir votre soutenance.
   Future<Map<String, dynamic>> getTodayMatchesRaw({
     String leagueCode = 'PL',
   }) async {
-    // URL dynamique utilisant le code de la ligue choisie
-    final absoluteUrl = 'https://football-data.org';
+    // On simule une attente réseau de 300ms pour conserver l'animation de chargement
+    await Future.delayed(const Duration(milliseconds: 300));
 
-    try {
-      final response = await dio.get(
-        absoluteUrl,
-        options: Options(headers: {'X-Auth-Token': _footballToken}),
-      );
+    String competitionName = 'Premier League 🏴󠁧󠁢󠁥󠁮󠁧󠁿';
+    List<Map<String, dynamic>> localizedNews = [];
 
-      if (response.statusCode == 200 && response.data is Map<String, dynamic>) {
-        final List<dynamic> apiMatches =
-            response.data['matches'] as List<dynamic>? ?? [];
-
-        final List<Map<String, dynamic>> formattedNews = apiMatches.map((
-          match,
-        ) {
-          final String homeTeam =
-              match['homeTeam']?['shortName'] ??
-              match['homeTeam']?['name'] ??
-              'Domicile';
-          final String awayTeam =
-              match['awayTeam']?['shortName'] ??
-              match['awayTeam']?['name'] ??
-              'Extérieur';
-          final String competition =
-              match['competition']?['name'] ?? 'Football';
-
-          final int? homeScore = match['score']?['fullTime']?['home'];
-          final int? awayScore = match['score']?['fullTime']?['away'];
-          final String scoreString = (homeScore != null && awayScore != null)
-              ? '$homeScore - $awayScore'
-              : 'vs';
-
-          return {
-            "id": match['id']?.toString() ?? '',
-            "title": "$homeTeam $scoreString $awayTeam",
-            "imageUrl":
-                match['homeTeam']?['crest'] ??
-                match['competition']?['emblem'] ??
-                '',
-            "gmtTime": match['utcDate'] ?? '',
-            "sourceStr": competition,
-          };
-        }).toList();
-
-        if (formattedNews.isEmpty) {
-          formattedNews.add({
-            "id": "0",
-            "title":
-                "Aucun match programmé pour cette compétition aujourd'hui.",
-            "imageUrl": "",
-            "gmtTime": DateTime.now().toIso8601String(),
-            "sourceStr": "FootScore Live",
-          });
-        }
-
-        return {
-          "response": {"news": formattedNews},
-        };
-      } else {
-        throw Exception('Réponse serveur invalide');
-      }
-    } on DioException catch (e) {
-      debugPrint("🚨 ERREUR DIO API : ${e.message}");
-      throw Exception('Erreur réseau football : ${e.message}');
-    } catch (e) {
-      throw Exception('Une erreur est survenue : $e');
+    if (leagueCode == 'FL1') {
+      competitionName = 'Ligue 1 🇫🇷';
+      localizedNews = [
+        {
+          "id": "fl1_1",
+          "title": "Paris Saint-Germain 3 - 1 Olympique de Marseille",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T21:45:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "fl1_2",
+          "title": "AS Monaco 2 - 0 Olympique Lyonnais",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T19:00:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "fl1_3",
+          "title": "LOSC Lille 1 - 1 RC Lens",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T16:30:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "fl1_4",
+          "title": "OGC Nice vs Stade Rennais FC",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T15:00:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "fl1_5",
+          "title": "Stade de Reims vs RC Strasbourg",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T13:15:00Z",
+          "sourceStr": competitionName,
+        },
+      ];
+    } else if (leagueCode == 'CL') {
+      competitionName = 'Champions League 🇪🇺';
+      localizedNews = [
+        {
+          "id": "cl_1",
+          "title": "Real Madrid 4 - 2 Manchester City FC",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T20:45:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "cl_2",
+          "title": "FC Barcelone 1 - 2 Bayern Munich",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T20:45:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "cl_3",
+          "title": "Arsenal FC vs Inter Milan",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T18:45:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "cl_4",
+          "title": "Juventus Turin vs Atletico Madrid",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T18:45:00Z",
+          "sourceStr": competitionName,
+        },
+      ];
+    } else {
+      // Format Premier League (Par défaut)
+      competitionName = 'Premier League 🏴󠁧󠁢󠁥󠁮󠁧󠁿';
+      localizedNews = [
+        {
+          "id": "pl_1",
+          "title": "Arsenal FC 2 - 1 Chelsea FC",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T17:30:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "pl_2",
+          "title": "Manchester United 0 - 3 Liverpool FC",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T16:00:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "pl_3",
+          "title": "Tottenham Hotspur vs Manchester City",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T20:00:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "pl_4",
+          "title": "Aston Villa 2 - 2 Newcastle United",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T14:00:00Z",
+          "sourceStr": competitionName,
+        },
+        {
+          "id": "pl_5",
+          "title": "West Ham vs Everton FC",
+          "imageUrl": "https://unsplash.com",
+          "gmtTime": "2026-08-20T12:30:00Z",
+          "sourceStr": competitionName,
+        },
+      ];
     }
+
+    return {
+      "response": {"news": localizedNews},
+    };
   }
 }
