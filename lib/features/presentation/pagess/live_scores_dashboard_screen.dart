@@ -1,11 +1,9 @@
 // lib/features/presentation/pagess/live_scores_dashboard_screen.dart
 import 'package:flutter/material.dart';
 import 'package:football_app/features/presentation/controllers/live_scores_provider.dart';
-import 'package:football_app/features/presentation/pagess/match_detail_screen.dart';
-
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/constants/app_constants.dart';
+import 'match_detail_screen.dart';
 
 class LiveScoresDashboardScreen extends StatefulWidget {
   const LiveScoresDashboardScreen({super.key});
@@ -16,13 +14,13 @@ class LiveScoresDashboardScreen extends StatefulWidget {
 }
 
 class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
-  String _selectedLeague = 'Ligue 1 🇫🇷';
+  String _selectedLeague = 'Premier League 🏴󠁧󠁢󠁥󠁮󠁧󠁿';
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<LiveScoresProvider>().fetchLiveMatches();
+      context.read<LiveScoresProvider>().fetchLiveMatches(leagueCode: 'PL');
     });
   }
 
@@ -44,16 +42,19 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
               ),
               const Divider(),
               ListTile(
-                title: const Text('Ligue 1 🇫🇷'),
-                onTap: () => _updateLeague('Ligue 1 🇫🇷'),
+                title: const Text('Bundesliga 🇩🇪'),
+                onTap: () => _updateLeague('Bundesliga 🇩🇪', 'FL1'),
               ),
               ListTile(
                 title: const Text('Premier League 🏴󠁧󠁢󠁥󠁮󠁧󠁿'),
-                onTap: () => _updateLeague('Premier League 🏴󠁧󠁢󠁥󠁮󠁧󠁿'),
+                onTap: () => _updateLeague(
+                  'Premier League 🏴%E2%80%99%F0%9F%8F%B4%F0%9F%8F%A7%E2%80%8D%E2%99%82%EF%B8%8F',
+                  'PL',
+                ),
               ),
               ListTile(
                 title: const Text('Champions League 🇪🇺'),
-                onTap: () => _updateLeague('Champions League 🇪🇺'),
+                onTap: () => _updateLeague('Champions League 🇪🇺', 'CL'),
               ),
             ],
           ),
@@ -62,11 +63,12 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
     );
   }
 
-  void _updateLeague(String league) {
+  void _updateLeague(String leagueName, String code) {
     setState(() {
-      _selectedLeague = league;
+      _selectedLeague = leagueName;
     });
     Navigator.pop(context);
+    context.read<LiveScoresProvider>().fetchLiveMatches(leagueCode: code);
   }
 
   @override
@@ -75,7 +77,6 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
-      // backgroundColor: AppColors.backgroundLight,
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -106,7 +107,7 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
       ),
       appBar: AppBar(
         elevation: 0,
-        backgroundColor: AppColors.backgroundDark,
+        backgroundColor: AppColors.primaryGreen,
         centerTitle: true,
         title: GestureDetector(
           onTap: () => _showLeagueSelector(context),
@@ -140,30 +141,28 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: AppColors.primaryGreen),
             )
+          : provider.matches.isEmpty
+          ? const Center(
+              child: Text(
+                "Aucun match disponible pour le moment.",
+                style: TextStyle(
+                  fontWeight: FontWeight.w600,
+                  color: Colors.grey,
+                ),
+              ),
+            )
           : CustomScrollView(
               slivers: [
                 // --- 1ère UI : LISTE HORIZONTALE ---
-                // --- 1ère UI : LISTE HORIZONTALE AVEC FOND DÉGRADÉ ---
                 SliverToBoxAdapter(
                   child: Container(
-                    // 🟢 RECTIFICATION : Ajout d'un dégradé de fond immersif
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                        colors: [
-                          AppColors.backgroundDark,
-                          AppColors
-                              .backgroundDark, // Se fond magnifiquement avec le thème sombre
-                        ],
-                      ),
-                    ),
-                    height: 150,
+                    color: AppColors.backgroundDark,
+                    height: 145,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(
                         horizontal: 12,
-                        vertical: 12,
+                        vertical: 10,
                       ),
                       itemCount: provider.matches.length >= 3
                           ? 3
@@ -183,11 +182,10 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
                                 ),
                               );
                             },
+                            borderRadius: BorderRadius.circular(12),
                             child: Card(
                               margin: EdgeInsets.zero,
-                              color: Colors.white.withValues(
-                                alpha: 0.15,
-                              ), // 🟢 Cartes semi-transparentes ultra-modernes
+                              color: AppColors.cardDark,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                                 side: const BorderSide(color: Colors.white10),
@@ -224,8 +222,7 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
                                           style: const TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 11,
-                                            color: Colors
-                                                .white, // Texte en blanc pour être lisible sur le fond sombre
+                                            color: Colors.white,
                                             height: 1.2,
                                           ),
                                         ),
@@ -262,93 +259,94 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
                 ),
 
                 // --- 2ème UI : CARTE IMAGE À LA UNE ---
+                // --- 2ème UI : CARTE IMAGE À LA UNE ---
                 SliverToBoxAdapter(
                   child: Container(
                     margin: const EdgeInsets.symmetric(
                       horizontal: 16,
                       vertical: 16,
                     ),
-                    child: provider.matches.isNotEmpty
-                        ? InkWell(
-                            onTap: () {},
-                            child: Card(
-                              color: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => MatchDetailScreen(
+                              match: provider.matches.first,
+                            ),
+                          ),
+                        );
+                      },
+                      child: Card(
+                        color: Colors.white,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        elevation: 2,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              height: 140,
+                              width: double.infinity,
+                              color: AppColors.primaryGreen.withValues(
+                                alpha: 0.1,
                               ),
-                              clipBehavior: Clip.antiAlias,
-                              elevation: 2,
+                              child: const Center(
+                                child: Icon(
+                                  Icons.stadium_outlined,
+                                  color: AppColors.primaryGreen,
+                                  size: 50,
+                                ),
+                              ),
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.all(14.0),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  // À mettre directement à l'intérieur du Column de votre carte "À LA UNE" :
-                                  Container(
-                                    height: 140,
-                                    width: double.infinity,
-                                    color: AppColors.primaryGreen.withValues(
-                                      alpha: 0.1,
-                                    ),
-                                    child: const Center(
-                                      child: Icon(
-                                        Icons
-                                            .stadium_outlined, // 🟢 Icône vectorielle de stade pro (Zéro chargement internet)
-                                        color: AppColors.primaryGreen,
-                                        size: 50,
-                                      ),
+                                  Text(
+                                    provider.matches.first.source.toUpperCase(),
+                                    style: const TextStyle(
+                                      color: AppColors.primaryGreen,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
                                     ),
                                   ),
-
-                                  Padding(
-                                    padding: const EdgeInsets.all(14.0),
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Text(
-                                          provider.matches[0].source
-                                              .toUpperCase(),
-                                          style: const TextStyle(
-                                            color: AppColors.primaryGreen,
-                                            fontSize: 10,
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 6),
-                                        Text(
-                                          provider.matches[0].title,
-                                          style: const TextStyle(
-                                            color: Colors.black87,
-                                            fontSize: 14,
-                                            fontWeight: FontWeight.bold,
-                                            height: 1.3,
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          provider.matches[0].time,
-                                          style: const TextStyle(
-                                            color: Colors.grey,
-                                            fontSize: 11,
-                                          ),
-                                        ),
-                                      ],
+                                  const SizedBox(height: 6),
+                                  Text(
+                                    provider.matches.first.title,
+                                    style: const TextStyle(
+                                      color: Colors.black87,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      height: 1.3,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    provider.matches.first.time,
+                                    style: const TextStyle(
+                                      color: Colors.grey,
+                                      fontSize: 11,
                                     ),
                                   ),
                                 ],
                               ),
                             ),
-                          )
-                        : const SizedBox.shrink(),
+                          ],
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-
-                // --- 3ème UI : FIL VERTICAL AVEC IMAGE ---
+                // --- 3ème UI : FIL VERTICAL ANTI-OVERFLOW ---
                 if (provider.matches.length > 1)
                   SliverPadding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
                     sliver: SliverList(
                       delegate: SliverChildBuilderDelegate((context, index) {
-                        // Affiche le reste des matchs à partir du deuxième élément
                         final match = provider.matches[index + 1];
                         return Container(
                           margin: const EdgeInsets.only(bottom: 10),
@@ -363,60 +361,77 @@ class _LiveScoresDashboardScreenState extends State<LiveScoresDashboardScreen> {
                               ),
                             ],
                           ),
-                          child: ListTile(
-                            contentPadding: const EdgeInsets.all(10),
-                            leading: ClipRRect(
-                              borderRadius: BorderRadius.circular(8),
-                              child: CachedNetworkImage(
-                                imageUrl: match.imageUrl,
-                                width: 80,
-                                height: 80,
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(
-                                  width: 80,
-                                  height: 80,
-                                  color: Colors.black,
-                                  child: const Center(
-                                    child: SizedBox(
-                                      width: 20,
-                                      height: 20,
-                                      child: CircularProgressIndicator(
-                                        strokeWidth: 2,
-                                        color: AppColors.primaryGreen,
-                                      ),
-                                    ),
-                                  ),
+                          child: InkWell(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      MatchDetailScreen(match: match),
                                 ),
-                                errorWidget: (context, url, error) => Container(
-                                  width: 80,
-                                  height: 80,
-                                  color: Colors.black,
-                                  child: const Icon(
-                                    Icons.newspaper,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                              ),
-                            ),
-                            subtitle: Padding(
-                              padding: const EdgeInsets.only(top: 8.0),
+                              );
+                            },
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
                               child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text(
-                                    match.source,
-                                    style: const TextStyle(
+                                  Container(
+                                    width: 48,
+                                    height: 48,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.primaryGreen.withValues(
+                                        alpha: .1,
+                                      ),
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: const Icon(
+                                      Icons.emoji_events_outlined,
                                       color: AppColors.primaryGreen,
-                                      fontSize: 11,
-                                      fontWeight: FontWeight.w500,
+                                      size: 24,
                                     ),
                                   ),
-                                  Text(
-                                    match.time,
-                                    style: const TextStyle(
-                                      color: Colors.grey,
-                                      fontSize: 11,
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: Column(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          match.title,
+                                          maxLines: 2,
+                                          overflow: TextOverflow.ellipsis,
+                                          style: const TextStyle(
+                                            color: Colors.black87,
+                                            fontSize: 13,
+                                            fontWeight: FontWeight.w600,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 6),
+                                        Row(
+                                          children: [
+                                            Expanded(
+                                              child: Text(
+                                                match.source,
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                                style: const TextStyle(
+                                                  color: AppColors.primaryGreen,
+                                                  fontSize: 11,
+                                                  fontWeight: FontWeight.w500,
+                                                ),
+                                              ),
+                                            ),
+                                            const SizedBox(width: 8),
+                                            Text(
+                                              match.time,
+                                              style: const TextStyle(
+                                                color: Colors.grey,
+                                                fontSize: 11,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ],
                                     ),
                                   ),
                                 ],

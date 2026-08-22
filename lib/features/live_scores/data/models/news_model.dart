@@ -1,4 +1,3 @@
-// lib/features/live_scores/data/models/news_model.dart
 import '../../domain/entities/football_news.dart';
 
 class NewsModel {
@@ -19,7 +18,7 @@ class NewsModel {
   factory NewsModel.fromJson(Map<String, dynamic> json) {
     String extractedSource = 'Inconnue';
 
-    // Sécurisation de la source : gère si l'API renvoie un String ou un Map
+    // Sécurisation de la source : gère si l'API renvoie une String ou une Map
     if (json['sourceStr'] != null) {
       if (json['sourceStr'] is Map) {
         extractedSource = json['sourceStr']['name']?.toString() ?? 'Inconnue';
@@ -34,14 +33,33 @@ class NewsModel {
       }
     }
 
+    // Normalisation de l'URL de l'image (évite les erreurs d'URL relatives)
+    // Dans NewsModel.fromJson
+    String rawImageUrl =
+        json['imageUrl'] as String? ?? json['urlToImage'] as String? ?? '';
+    if (rawImageUrl.isEmpty || !rawImageUrl.startsWith('http')) {
+      rawImageUrl =
+          'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?w=500'; // Image de foot par défaut
+    }
+
     return NewsModel(
       id: json['id']?.toString() ?? '',
       title: json['title'] as String? ?? 'Aucun titre',
-      imageUrl: json['imageUrl'] as String? ?? '',
+      imageUrl: rawImageUrl,
       gmtTime:
           json['gmtTime'] as String? ?? json['publishedAt'] as String? ?? '',
       sourceStr: extractedSource,
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'imageUrl': imageUrl,
+      'gmtTime': gmtTime,
+      'sourceStr': sourceStr,
+    };
   }
 
   FootballNews toEntity() {
@@ -52,17 +70,13 @@ class NewsModel {
         final List<String> parts = gmtTime.split('T');
         if (parts.length > 1) {
           final String timeString = parts[1];
-          formattedTime = timeString.substring(
-            0,
-            5,
-          ); // Extrait proprement "HH:mm"
+          formattedTime = timeString.substring(0, 5); // Extrait "HH:mm"
         }
       } catch (_) {
         formattedTime = 'Récent';
       }
     } else if (gmtTime.isNotEmpty) {
-      formattedTime =
-          gmtTime; // Conserve le format brut si l'API l'a déjà nettoyé
+      formattedTime = gmtTime;
     }
 
     return FootballNews(
@@ -74,12 +88,9 @@ class NewsModel {
     );
   }
 
-  //  CODE OPTIMISÉ ET CORRIGÉ
   static List<NewsModel> fromJsonList(List<dynamic> jsonList) {
     return jsonList
-        .whereType<
-          Map<String, dynamic>
-        >() // Utilisation de whereType demandée par le linter
+        .whereType<Map<String, dynamic>>()
         .map((json) => NewsModel.fromJson(json))
         .toList();
   }
