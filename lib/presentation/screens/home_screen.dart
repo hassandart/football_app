@@ -85,33 +85,36 @@ class _HomeScreenState extends State<HomeScreen> {
                   // === 1/3 SUPÉRIEUR (CONTENEUR DE SECOURS DE L'AFFICHE À LA UNE) ===
                   Stack(
                     children: [
+                      // Image de fond à la une
                       Container(
-                        height: screenSize.height * 0.40,
+                        height: screenSize.height * 0.50,
                         width: double.infinity,
-                        color: const Color(
-                          0xFF1E1E1E,
-                        ), // Fond gris cinéma stable
-                        child: const Center(
-                          child: Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Icon(
-                                Icons.movie_creation_outlined,
-                                size: 64,
-                                color: Color(0xFFE50914),
-                              ), // Grand logo cinéma rouge
-                              SizedBox(height: 8),
-                              Text(
-                                'Affiche en cours...',
-                                style: TextStyle(
-                                  color: Colors.white54,
-                                  fontSize: 12,
+                        color: const Color(0xFF1E1E1E),
+                        child:
+                            featuredMovie.posterUrl != null &&
+                                featuredMovie.posterUrl!.isNotEmpty
+                            ? Image.network(
+                                provider.getImageUrl(featuredMovie.posterUrl),
+                                fit: BoxFit.cover,
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Center(
+                                    child: Icon(
+                                      Icons.broken_image,
+                                      size: 64,
+                                      color: Colors.grey,
+                                    ),
+                                  );
+                                },
+                              )
+                            : const Center(
+                                child: Icon(
+                                  Icons.movie,
+                                  size: 64,
+                                  color: Colors.grey,
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
                       ),
+
                       // Dégradé pour fusionner avec le fond
                       Positioned.fill(
                         child: Container(
@@ -235,61 +238,47 @@ class _HomeScreenState extends State<HomeScreen> {
                     itemCount: verticalMovies.length,
                     itemBuilder: (context, index) {
                       final movie = verticalMovies[index];
+                      // === DANS LE LISTVIEW.BUILDER, POUR CHAQUE FILM ===
                       return Card(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        color: const Color(0xFF1E1E1E),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                        // ... vos autres propriétés Card
                         child: ListTile(
                           contentPadding: const EdgeInsets.all(8),
-                          // LEADING REMPLACÉ PAR UN JOLI CARRÉ AVEC UNE ICÔNE PLAY DORÉE ⬇️
-                          leading: Container(
-                            width: 60,
-                            height: 90,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF2A2A2A),
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: const Icon(
-                              Icons.play_circle_outline,
-                              color: Color(0xFFFFB703),
-                              size: 30,
+                          // UTILISATION DE ASPECTRATIO POUR CONTRÔLER STRICTEMENT LA TAILLE
+                          leading: AspectRatio(
+                            aspectRatio:
+                                2 /
+                                3, // 👈 Définit un ratio d'image vertical strict (Affiche de film)
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(6),
+                              child: Container(
+                                color: const Color(
+                                  0xFF2A2A2A,
+                                ), // Fond de secours
+                                child: movie.posterUrl?.isNotEmpty == true
+                                    ? Image.network(
+                                        provider.getImageUrl(movie.posterUrl),
+                                        // IMPORTANT : BoxFit.cover pour remplir le ratio sans déformer
+                                        fit: BoxFit.cover,
+                                        errorBuilder:
+                                            (context, error, stackTrace) {
+                                              return const Icon(
+                                                Icons.broken_image,
+                                                color: Colors.grey,
+                                              );
+                                            },
+                                      )
+                                    : const Icon(
+                                        Icons.movie,
+                                        color: Color(0xFFFFB703),
+                                      ),
+                              ),
                             ),
                           ),
                           title: Text(
                             movie.title,
-                            style: const TextStyle(
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                            // ... vos styles de titre
                           ),
-                          subtitle: Padding(
-                            padding: const EdgeInsets.only(top: 8.0),
-                            child: Row(
-                              children: [
-                                const Icon(
-                                  Icons.star,
-                                  color: Color(0xFFFFB703),
-                                  size: 16,
-                                ),
-                                const SizedBox(width: 4),
-                                Text(
-                                  movie.rating.toStringAsFixed(1),
-                                  style: const TextStyle(
-                                    color: Color(0xFFFFB703),
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          trailing: const Icon(
-                            Icons.arrow_forward_ios,
-                            size: 16,
-                            color: Colors.white30,
-                          ),
-                          onTap: () {},
+                          // ... le reste du ListTile
                         ),
                       );
                     },

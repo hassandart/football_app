@@ -34,8 +34,8 @@ class MovieModel {
       id: id,
       title: title,
       overview: overview,
-      // On remplace temporairement par des images de test légères et universelles :
-      posterUrl: 'https://picsum.photos',
+      posterUrl:
+          posterPath, // 👈 On transmet le chemin de l'API TMDB (ex: /path.jpg)
       rating: voteAverage,
     );
   }

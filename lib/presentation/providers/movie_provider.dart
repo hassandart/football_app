@@ -10,6 +10,9 @@ class MovieProvider extends ChangeNotifier {
 
   MovieProvider(this._movieRepository);
 
+  // URL de base TMDB pour charger les images
+  static const String _imageBaseUrl = 'https://image.tmdb.org/t/p/w185';
+
   // Variable privée contenant la liste des films et son getter public
   List<Movie> _movies = [];
   List<Movie> get movies => _movies;
@@ -21,6 +24,12 @@ class MovieProvider extends ChangeNotifier {
   // Variable privée pour stocker le message d'erreur et son getter public
   String _errorMessage = '';
   String get errorMessage => _errorMessage;
+
+  /// Construit l'URL complète pour l'image d'un film
+  String getImageUrl(String? path) {
+    if (path == null || path.isEmpty) return '';
+    return '$_imageBaseUrl$path';
+  }
 
   /// Fonction principale pour charger les films populaires
   Future<void> loadPopularMovies() async {
@@ -37,12 +46,11 @@ class MovieProvider extends ChangeNotifier {
       _state = MovieState.loaded;
     } catch (e) {
       // 4. Une erreur est survenue (problème réseau, clé API invalide, etc.)
-      // On nettoie la chaîne pour enlever le préfixe "Exception: " si présent
       _errorMessage = e.toString().replaceAll('Exception: ', '');
       _state = MovieState.error;
     }
 
-    // 5. On notifie une dernière fois l'UI pour afficher le résultat final (Liste ou Erreur)
+    // 5. On notifie une dernière fois l'UI pour afficher le résultat final
     notifyListeners();
   }
 }

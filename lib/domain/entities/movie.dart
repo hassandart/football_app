@@ -2,7 +2,7 @@ class Movie {
   final int id;
   final String title;
   final String overview;
-  final String posterUrl;
+  final String? posterUrl;
   final double rating;
 
   Movie({
